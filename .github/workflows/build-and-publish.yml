@@ -1,0 +1,186 @@
+name: Build and Publish Packages
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.set-matrix.outputs.packages }}
+      tests: ${{ steps.set-matrix.outputs.tests }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - id: set-matrix
+        run: bash script/set-matrix.sh
+
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.prepare.outputs.packages) }}
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup melange
+        uses: chainguard-dev/actions/setup-melange@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+        with:
+          version: v0.37.2
+
+      - name: Write signing key
+        run: echo "${{ secrets.MELANGE_SIGNING_KEY }}" > /tmp/melange.rsa
+
+      - name: Build ${{ matrix.package }} (${{ matrix.arch }})
+        uses: chainguard-dev/actions/melange-build-pkg@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+        with:
+          config: melange/${{ matrix.package }}.yaml
+          archs: ${{ matrix.arch }}
+          sign-with-key: true
+          signing-key-path: /tmp/melange.rsa
+
+      - name: Remove APKINDEX files
+        run: find packages/ -name "APKINDEX.tar.gz" -delete
+        if: always()
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ matrix.package }}-${{ matrix.arch }}-packages
+          path: packages/
+          if-no-files-found: ignore
+
+  index:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          path: packages
+          pattern: "*-packages"
+          merge-multiple: true
+
+      - name: Setup melange
+        uses: chainguard-dev/actions/setup-melange@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+
+      - name: Write signing key
+        run: echo "${{ secrets.MELANGE_SIGNING_KEY }}" > /tmp/melange.rsa
+
+      - name: Create APKINDEX for ${{ matrix.arch }}
+        run: melange index -a ${{ matrix.arch }} -o packages/${{ matrix.arch }}/APKINDEX.tar.gz --signing-key /tmp/melange.rsa packages/${{ matrix.arch }}/*.apk
+
+      - name: Upload APKINDEX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apkindex-${{ matrix.arch }}
+          path: packages/${{ matrix.arch }}/APKINDEX.tar.gz
+
+  construct:
+    needs: index
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+         persist-credentials: false
+
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          path: packages
+          pattern: "*-packages"
+          merge-multiple: true
+
+      - name: Download APKINDEX artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: apkindex
+          pattern: "apkindex-*"
+
+      - name: Construct repository
+        run: bash script/construct-repository.sh
+
+      - name: Upload repository artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository
+          path: repository/
+
+  test:
+    needs: [prepare, construct]
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        test: ${{ fromJson(needs.prepare.outputs.tests) }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download repository artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: repository
+          path: repository
+
+      - name: Build test image for ${{ matrix.test }} (${{ matrix.arch }})
+        env:
+          TEST: ${{ matrix.test }}
+          ARCH: ${{ matrix.arch }}
+        run: docker image build -f tests/"${TEST}".Dockerfile -t test-"${TEST}":"${ARCH}" .
+
+      - name: Run test for ${{ matrix.test }} (${{ matrix.arch }})
+        env:
+          TEST: ${{ matrix.test }}
+          ARCH: ${{ matrix.arch }}
+        run: docker run --rm test-"${TEST}":"${ARCH}"
+
+  upload:
+    needs: [build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download repository artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: repository
+          path: repository
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: repository
+
+  deploy:
+    needs: upload
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
