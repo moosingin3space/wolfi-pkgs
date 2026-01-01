@@ -118,11 +118,10 @@ jobs:
       - name: Construct repository
         run: bash script/construct-repository.sh
 
-      - name: Upload repository artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: repository
-          path: repository/
+          path: repository
 
   test:
     needs: [prepare, construct]
@@ -136,11 +135,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download repository artifact
+      - name: Download Pages artifact
         uses: actions/download-artifact@v4
         with:
-          name: repository
-          path: repository
+          name: github-pages
+          path: .
+
+      - name: Extract Pages artifact
+        run: mkdir repository/ && tar -C repository/ -xf artifact.tar
 
       - name: Build test image for ${{ matrix.test }} (${{ matrix.arch }})
         env:
@@ -154,24 +156,8 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: docker run --rm test-"${TEST}":"${ARCH}"
 
-  upload:
-    needs: [build, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download repository artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: repository
-          path: repository
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: repository
-
   deploy:
-    needs: upload
+    needs: [test, construct]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
