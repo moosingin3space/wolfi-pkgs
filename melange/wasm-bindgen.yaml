@@ -1,0 +1,25 @@
+package:
+  name: wasm-bindgen
+  version: 0.2.100
+  epoch: 0
+  description: Facilitating high-level interactions between Wasm modules and JavaScript
+  copyright:
+    - license: Apache-2.0
+
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+
+pipeline:
+  - uses: git-checkout
+    with:
+      expected-commit: 2405ec2b4bcd1cc4e3bd1562c373e9d5f0cbdcb5
+      repository: https://github.com/wasm-bindgen/wasm-bindgen
+      tag: ${{package.version}}
+  - uses: cargo/build
+    with:
+      modroot: crates/cli
+      output: wasm-bindgen
