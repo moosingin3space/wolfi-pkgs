@@ -8,6 +8,7 @@ package:
   dependencies:
     runtime:
       - wasm-pack
+      - wasm-bindgen
 
 environment:
   contents:
