@@ -73,7 +73,7 @@ jobs:
           persist-credentials: false
 
       - name: Download all packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: packages
           pattern: "*-packages"
@@ -89,7 +89,7 @@ jobs:
         run: melange index -a ${{ matrix.arch }} -o packages/${{ matrix.arch }}/APKINDEX.tar.gz --signing-key /tmp/melange.rsa packages/${{ matrix.arch }}/*.apk
 
       - name: Upload APKINDEX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: apkindex-${{ matrix.arch }}
           path: packages/${{ matrix.arch }}/APKINDEX.tar.gz
@@ -103,14 +103,14 @@ jobs:
          persist-credentials: false
 
       - name: Download all packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: packages
           pattern: "*-packages"
           merge-multiple: true
 
       - name: Download APKINDEX artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: apkindex
           pattern: "apkindex-*"
@@ -136,7 +136,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Pages artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: github-pages
           path: .
