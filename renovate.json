@@ -12,8 +12,9 @@
         "melange/*.yaml"
       ],
       "matchStrings": [
-        "pipeline[uses = 'git-checkout'].{ 'depName': $$.package.name, 'packageName': $replace(with.repository, 'https://github.com/', ''), 'currentValue': $$.package.version, 'currentDigest': with.`expected-commit`, 'datasource': 'github-releases' }"
-      ]
+        "pipeline[uses = 'git-checkout'].{ 'depName': $$.package.name, 'packageName': $replace(with.repository, 'https://github.com/', ''), 'currentValue': $$.package.version, 'currentDigest': with.`expected-commit` }"
+      ],
+      "datasourceTemplate": "github-tags"
     }
   ]
 }
