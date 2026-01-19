@@ -1,11 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigestsToSemver"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigestsToSemver"
+  ],
   "customManagers": [
     {
       "customType": "jsonata",
       "fileFormat": "yaml",
-      "fileMatch": ["melange/*.yaml"],
+      "managerFilePatterns": [
+        "/melange/*.yaml/"
+      ],
       "matchStrings": [
         "pipeline[uses = 'git-checkout'].{ 'depName': $$.package.name, 'packageName': $replace(with.repository, 'https://github.com/', ''), 'currentValue': $$.package.version, 'currentDigest': with.`expected-commit`, 'datasource': 'github-releases' }"
       ]
