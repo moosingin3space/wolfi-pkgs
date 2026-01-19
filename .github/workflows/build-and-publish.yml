@@ -89,7 +89,7 @@ jobs:
         run: melange index -a ${{ matrix.arch }} -o packages/${{ matrix.arch }}/APKINDEX.tar.gz --signing-key /tmp/melange.rsa packages/${{ matrix.arch }}/*.apk
 
       - name: Upload APKINDEX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: apkindex-${{ matrix.arch }}
           path: packages/${{ matrix.arch }}/APKINDEX.tar.gz
