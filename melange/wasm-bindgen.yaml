@@ -1,6 +1,6 @@
 package:
   name: wasm-bindgen
-  version: 0.2.100
+  version: 0.2.114
   epoch: 0
   description: Facilitating high-level interactions between Wasm modules and JavaScript
   copyright:
@@ -16,7 +16,7 @@ environment:
 pipeline:
   - uses: git-checkout
     with:
-      expected-commit: 2405ec2b4bcd1cc4e3bd1562c373e9d5f0cbdcb5
+      expected-commit: 22cfd556870fa897d0b2db4c84603c1a9643298c
       repository: https://github.com/wasm-bindgen/wasm-bindgen
       tag: ${{package.version}}
   - uses: cargo/build
