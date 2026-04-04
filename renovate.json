@@ -4,6 +4,12 @@
     "config:recommended",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["chainguard-dev/actions"],
+      "automerge": true
+    }
+  ],
   "customManagers": [
     {
       "customType": "jsonata",
