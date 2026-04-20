@@ -1,6 +1,6 @@
 package:
   name: worker-build
-  version: 0.8.0
+  version: 0.8.1
   epoch: 0
   description: build Rust Cloudflare Workers into WASM binaries.
   copyright:
@@ -22,7 +22,7 @@ environment:
 pipeline:
   - uses: git-checkout
     with:
-      expected-commit: 783947dc7eaca1a1312c8d887715e71b59091582
+      expected-commit: 209c230bfae6beb44855e0467c99913d76a1d09b
       repository: https://github.com/cloudflare/workers-rs
       tag: v${{package.version}}
       recurse-submodules: true
