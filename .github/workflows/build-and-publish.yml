@@ -39,7 +39,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup melange
-        uses: chainguard-dev/actions/setup-melange@0cba302c40fce067ec0d39f1d91b10580d4b06b0 # v1.6.16
+        uses: chainguard-dev/actions/setup-melange@916fec00fb80f3cd124a0b41eef79ee63f607c5d # v1.6.17
         with:
           version: v0.37.2
 
@@ -47,7 +47,7 @@ jobs:
         run: echo "${{ secrets.MELANGE_SIGNING_KEY }}" > /tmp/melange.rsa
 
       - name: Build ${{ matrix.package }} (${{ matrix.arch }})
-        uses: chainguard-dev/actions/melange-build-pkg@0cba302c40fce067ec0d39f1d91b10580d4b06b0 # v1.6.16
+        uses: chainguard-dev/actions/melange-build-pkg@916fec00fb80f3cd124a0b41eef79ee63f607c5d # v1.6.17
         with:
           config: melange/${{ matrix.package }}.yaml
           archs: ${{ matrix.arch }}
@@ -84,7 +84,7 @@ jobs:
           merge-multiple: true
 
       - name: Setup melange
-        uses: chainguard-dev/actions/setup-melange@0cba302c40fce067ec0d39f1d91b10580d4b06b0 # v1.6.16
+        uses: chainguard-dev/actions/setup-melange@916fec00fb80f3cd124a0b41eef79ee63f607c5d # v1.6.17
 
       - name: Write signing key
         run: echo "${{ secrets.MELANGE_SIGNING_KEY }}" > /tmp/melange.rsa
